@@ -1,0 +1,19 @@
+{
+  "name": "badger",
+  "version": "1.0.0",
+  "description": "Discover new Twitch badges",
+  "main": "badger.ts",
+  "scripts": {
+    "start": "npx ts-node badger.ts",
+    "build": "npx tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Peter Cunha",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "ts-node": "^10.9.2",
+    "tslib": "^2.6.2",
+    "typescript": "^5.4.3"
+  }
+}
