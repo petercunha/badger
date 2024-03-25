@@ -10,7 +10,6 @@
   },
   "author": "Peter Cunha",
   "license": "MIT",
-  "type": "module",
   "devDependencies": {
     "@types/node": "^20.11.30",
     "@types/puppeteer": "^7.0.4",
