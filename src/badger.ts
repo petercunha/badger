@@ -17,8 +17,8 @@ async function run() {
     `) as SearchResult[];
     
     results
-        .filter((hit: any) => moment().diff(moment(new Date(hit.meta.dateFormatted)), 'days') < 30)
-        .map((hit: any) => {
+        .filter((hit: SearchResult) => moment().diff(moment(new Date(hit.meta.dateFormatted)), 'days') < 30)
+        .map((hit: SearchResult) => {
             const date = hit.meta.dateFormatted
             console.log(date)
         })
