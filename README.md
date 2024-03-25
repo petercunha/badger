@@ -11,12 +11,11 @@ Get notified when Twitch releases new chat badges!
 ## Information
 ### How it works: 
 - Scrape Twitch's blog for any mention of the word "badge"
-- Order search results by date
-- Select search results that were posted in the last 24 hours
+- Select results that were posted in the last 24 hours
 
 ### To do:
 - Run a serverless function every 24 hours that checks blog posts
-- If there is a new post about a blog, send out notifications to a mailing / SMS list
+- If there is a new post about a badge, send out notifications to a mailing / SMS list
 
 ### Future goals:
 - Build a nice looking website where people can subscribe to notifications of new badges
