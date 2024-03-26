@@ -30,3 +30,14 @@ export interface SearchResult {
     }
   ]
 }
+
+
+export type BlogPost = {
+  url: string,
+  content: string,
+  word_count: number,
+  title: string,
+  image: string,
+  date: string,
+  excerpt: string,
+}
