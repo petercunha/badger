@@ -1,7 +1,10 @@
 import { BlogPost, type SearchResult } from './types'
 import { getPosts } from './lib'
+import { PrismaClient } from '@prisma/client'
 import moment from 'moment'
 import fs from 'fs'
+
+const prisma = new PrismaClient()
 
 async function main(): Promise<void> {
   const results: SearchResult[] = await getPosts()
@@ -16,16 +19,26 @@ async function main(): Promise<void> {
   //     console.log(date)
   //     return hit
   //   })
-  writeToJsonFile(results)
+  await writeToDB(results)
 }
 
-function writeToJsonFile(results: SearchResult[]) {
-  let formatted: BlogPost[] = mapResults(results)
-  try {
-    fs.writeFileSync('./database.json', JSON.stringify(formatted))
-  } catch (err) {
-    console.error(err)
+async function writeToDB(results: SearchResult[]) {
+  let posts: BlogPost[] = mapResults(results)
+  console.log('Found', posts.length, 'blog posts')
+  await sleep(1000)
+
+  for (const post of posts) {
+    try {
+      const blogPost = await prisma.blogPost.create({
+        data: post,
+      })
+      console.log('Inserted', blogPost.url)
+    } catch (e) {
+      console.log('Error inserting', post.url)
+    }
   }
+
+  console.log('Done')
 }
 
 function mapResults(results: SearchResult[]): BlogPost[] {
@@ -40,4 +53,16 @@ function mapResults(results: SearchResult[]): BlogPost[] {
   }))
 }
 
-void main()
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+main()
+  .then(async () => {
+    await prisma.$disconnect()
+  })
+  .catch(async (e) => {
+    console.error(e)
+    await prisma.$disconnect()
+    process.exit(1)
+  })
