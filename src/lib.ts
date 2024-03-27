@@ -1,4 +1,4 @@
-import type { SearchResult } from './types'
+import type { BlogPost, SearchResult } from './types'
 import puppeteer from 'puppeteer'
 
 export async function getPosts(): Promise<SearchResult[]> {
@@ -9,7 +9,7 @@ export async function getPosts(): Promise<SearchResult[]> {
   const results = await await page.evaluate(`
         // This code is run inside a headless browser via puppeteer
         import("/_pagefind/pagefind.js").then(pagefind => {
-            return pagefind.search("badge", { sort: { date: "desc" } }).then(search => {
+            return pagefind.search("badge", { sort: { date: "asc" } }).then(search => {
                 return Promise.all(search.results.map(hit => hit.data()))
             })
         })
@@ -17,4 +17,20 @@ export async function getPosts(): Promise<SearchResult[]> {
 
   await browser.close()
   return results
+}
+
+export function convertToBlogPosts(results: SearchResult[]): BlogPost[] {
+  return results.map(x => ({
+    url: x.url,
+    content: x.content,
+    word_count: x.word_count,
+    title: x.meta.title,
+    image: x.meta.image,
+    date: new Date(x.meta.dateFormatted).toISOString(),
+    excerpt: x.excerpt,
+  }))
+}
+
+export function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }

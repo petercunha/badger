@@ -1,60 +1,35 @@
 import { BlogPost, type SearchResult } from './types'
-import { getPosts } from './lib'
+import { convertToBlogPosts, getPosts } from './lib'
 import { PrismaClient } from '@prisma/client'
 import moment from 'moment'
-import fs from 'fs'
 
 const prisma = new PrismaClient()
 
 async function main(): Promise<void> {
-  const results: SearchResult[] = await getPosts()
-  // results
-  //   .filter((hit: SearchResult) => {
-  //     return (
-  //       moment().diff(moment(new Date(hit.meta.dateFormatted)), 'days') < 30
-  //     )
-  //   })
-  //   .map((hit: SearchResult) => {
-  //     const date = hit.meta.dateFormatted
-  //     console.log(date)
-  //     return hit
-  //   })
-  await writeToDB(results)
-}
+  const searchResults: SearchResult[] = await getPosts()
 
-async function writeToDB(results: SearchResult[]) {
-  let posts: BlogPost[] = mapResults(results)
-  console.log('Found', posts.length, 'blog posts')
-  await sleep(1000)
+  // Get blog posts from the last 30 days
+  const recentPosts: BlogPost[] = convertToBlogPosts(searchResults.filter((hit: SearchResult) => (moment().diff(moment(new Date(hit.meta.dateFormatted)), 'days') < 60)))
 
-  for (const post of posts) {
-    try {
-      const blogPost = await prisma.blogPost.create({
-        data: post,
-      })
-      console.log('Inserted', blogPost.url)
-    } catch (e) {
-      console.log('Error inserting', post.url)
+  console.log('Total posts found:', searchResults.length)
+  console.log('Recent posts:', recentPosts.length)
+
+  // Add new blog posts to the DB, and get ready to send notifications about them
+  const newPosts: BlogPost[] = []
+  for (const post of recentPosts) {
+    const postAlreadyExists: Boolean = Boolean(await prisma.blogPost.findUnique({ where: { url: post.url } }))
+    if (!postAlreadyExists) {
+      console.log('New post:', post.url)
+      await prisma.blogPost.create({ data: post })
+      newPosts.push(post)
     }
   }
 
-  console.log('Done')
-}
+  if (newPosts.length === 0) {
+    return console.log('None of the posts are new. Exiting...')
+  }
 
-function mapResults(results: SearchResult[]): BlogPost[] {
-  return results.map(x => ({
-    url: x.url,
-    content: x.content,
-    word_count: x.word_count,
-    title: x.meta.title,
-    image: x.meta.image,
-    date: new Date(x.meta.dateFormatted).toISOString(),
-    excerpt: x.excerpt,
-  }))
-}
-
-function sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  console.log('Send notifications for', newPosts.length, 'new posts')
 }
 
 main()
