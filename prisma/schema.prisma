@@ -9,13 +9,11 @@ datasource db {
 
 model BlogPost {
   id         Int    @id @default(autoincrement())
-  url        String
+  url        String @unique
   content    String
   word_count Int
   title      String
   image      String
   date       String
   excerpt    String
-
-  @@unique([url])
 }
