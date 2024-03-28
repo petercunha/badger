@@ -2,8 +2,31 @@ import { PrismaClient } from '@prisma/client'
 import type { BlogPost, SearchResult } from './types'
 import puppeteer from 'puppeteer'
 import moment from 'moment'
+import nodemailer from 'nodemailer'
 
 const prisma = new PrismaClient()
+
+const transporter = nodemailer.createTransport({
+  host: process.env.AWS_SES_SMTP_SERVER,
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.AWS_SES_SMTP_USER,
+    pass: process.env.AWS_SES_SMTP_PASS
+  }
+})
+
+export async function sendEmail(params: { newPosts: number }): Promise<void> {
+  // send mail with defined transport object
+  const info = await transporter.sendMail({
+    from: '"Twitch Badge Notifier 👻" <badger@petercunha.com>', // sender address
+    to: 'petercunha8@gmail.com', // list of receivers
+    subject: 'Hello ✔', // Subject line
+    text: `Greetings sire! Twitch just announced ${params.newPosts} new badges! Go get yours :3`, // plain text body
+    html: `Greetings sire! Twitch just announced ${params.newPosts} new badges! Go get yours :3` // html body
+  })
+  console.log('Message sent: %s', info.messageId)
+}
 
 export async function getPosts(): Promise<BlogPost[]> {
   const browser = await puppeteer.launch()
