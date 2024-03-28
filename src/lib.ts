@@ -44,7 +44,6 @@ export async function getNewPosts(): Promise<BlogPost[]> {
 
 export function convertToBlogPosts(results: SearchResult[]): BlogPost[] {
   return results.map(x => ({
-    id: undefined,
     url: x.url,
     content: x.content,
     word_count: x.word_count,
