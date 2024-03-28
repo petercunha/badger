@@ -6,7 +6,8 @@
   "scripts": {
     "start": "npx ts-node src/index.ts",
     "build": "npx tsc",
-    "test": "npx ts-node src/test.ts"
+    "test": "npx ts-node src/test.ts",
+    "lint": "npx eslint src/* --fix"
   },
   "author": "Peter Cunha",
   "license": "MIT",

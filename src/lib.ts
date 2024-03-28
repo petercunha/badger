@@ -1,7 +1,11 @@
+import { PrismaClient } from '@prisma/client'
 import type { BlogPost, SearchResult } from './types'
 import puppeteer from 'puppeteer'
+import moment from 'moment'
 
-export async function getPosts(): Promise<SearchResult[]> {
+const prisma = new PrismaClient()
+
+export async function getPosts(): Promise<BlogPost[]> {
   const browser = await puppeteer.launch()
   const page = await browser.newPage()
   await page.goto('https://blog.twitch.tv/en/search/')
@@ -16,21 +20,41 @@ export async function getPosts(): Promise<SearchResult[]> {
     `) as SearchResult[]
 
   await browser.close()
-  return results
+  return convertToBlogPosts(results)
+}
+
+export async function getRecentPosts(days: number): Promise<BlogPost[]> {
+  const allPosts = await getPosts()
+  const recentPosts = allPosts.filter((post: BlogPost) => (moment().diff(moment(new Date(post.date)), 'days') < days))
+  return recentPosts
+}
+
+export async function getNewPosts(): Promise<BlogPost[]> {
+  const newPosts: BlogPost[] = []
+  for (const post of await getPosts()) {
+    const postAlreadyExists = Boolean(await prisma.blogPost.findUnique({ where: { url: post.url } }))
+    if (!postAlreadyExists) {
+      console.log('New post:', post.url)
+      await prisma.blogPost.create({ data: post })
+      newPosts.push(post)
+    }
+  }
+  return newPosts
 }
 
 export function convertToBlogPosts(results: SearchResult[]): BlogPost[] {
   return results.map(x => ({
+    id: undefined,
     url: x.url,
     content: x.content,
     word_count: x.word_count,
     title: x.meta.title,
     image: x.meta.image,
     date: new Date(x.meta.dateFormatted).toISOString(),
-    excerpt: x.excerpt,
+    excerpt: x.excerpt
   }))
 }
 
-export function sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+export async function sleep(ms: number): Promise<NodeJS.Timeout> {
+  return await new Promise(resolve => setTimeout(resolve, ms))
 }

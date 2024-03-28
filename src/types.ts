@@ -1,3 +1,5 @@
+import { type BlogPost as BlogPostSchema } from '@prisma/client'
+
 export interface SearchResult {
   url: string
   excerpt: string
@@ -31,13 +33,4 @@ export interface SearchResult {
   ]
 }
 
-
-export type BlogPost = {
-  url: string,
-  content: string,
-  word_count: number,
-  title: string,
-  image: string,
-  date: string,
-  excerpt: string,
-}
+export interface BlogPost extends Omit<BlogPostSchema, 'id'> { }

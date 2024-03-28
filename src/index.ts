@@ -1,34 +1,23 @@
-import { BlogPost, type SearchResult } from './types'
-import { convertToBlogPosts, getPosts } from './lib'
+import { getNewPosts, getPosts } from './lib'
 import { PrismaClient } from '@prisma/client'
-import moment from 'moment'
+import { type BlogPost } from './types'
 
 const prisma = new PrismaClient()
 
 async function main(): Promise<void> {
-  const searchResults: SearchResult[] = await getPosts()
+  // Get all blog posts mentioning badges
+  const allPosts: BlogPost[] = await getPosts()
 
-  // Get blog posts from the last 30 days
-  const recentPosts: BlogPost[] = convertToBlogPosts(searchResults.filter((hit: SearchResult) => (moment().diff(moment(new Date(hit.meta.dateFormatted)), 'days') < 60)))
+  // Get unindexed blog posts and add them to the DB
+  const newPosts: BlogPost[] = await getNewPosts()
 
-  console.log('Total posts found:', searchResults.length)
-  console.log('Recent posts:', recentPosts.length)
-
-  // Add new blog posts to the DB, and get ready to send notifications about them
-  const newPosts: BlogPost[] = []
-  for (const post of recentPosts) {
-    const postAlreadyExists: Boolean = Boolean(await prisma.blogPost.findUnique({ where: { url: post.url } }))
-    if (!postAlreadyExists) {
-      console.log('New post:', post.url)
-      await prisma.blogPost.create({ data: post })
-      newPosts.push(post)
-    }
-  }
+  console.log('Total posts found:', allPosts.length)
 
   if (newPosts.length === 0) {
-    return console.log('None of the posts are new. Exiting...')
+    console.log('None of the posts are new. Exiting...')
+    return
   }
-
+  console.log('Discovered', newPosts.length, 'new posts and added them to the DB')
   console.log('Send notifications for', newPosts.length, 'new posts')
 }
 
